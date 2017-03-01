@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.0)
+project( computeSaliency )
+find_package( OpenCV REQUIRED )
+add_executable( computeSaliency computeSaliency.cpp )
+target_link_libraries( computeSaliency ${OpenCV_LIBS} )
