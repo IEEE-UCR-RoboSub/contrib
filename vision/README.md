@@ -11,11 +11,11 @@ dependencies between each other if possible.
 These modules require OpenCV and some additional modules that are not a part of 
 the core installation.
 
-# OpenCV
+### OpenCV
 
 You can install OpenCV from <http://opencv.org>
 
-# OpenCV (Additional Modules)
+### OpenCV (Additional Modules)
 
 The additional OpenCV functionality required by some of these modules can be 
 installed from the opencv\_contrib repository found at <https://github.com/opencv/opencv_contrib>
