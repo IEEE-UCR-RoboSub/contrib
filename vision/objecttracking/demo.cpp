@@ -75,10 +75,13 @@ Mat get_saliencyMap(Mat image) {
 vector<vector<Point>> get_contours(
         Mat src_img, 
         vector<vector<Point>> contours) {
-    Mat canny_out;
+    Mat canny_out,
+        thresh_out;
 
-    Canny(src_img, canny_out, 50, 100, 3);
-    findContours(canny_out, contours, CV_RETR_LIST, 
+    threshold(src_img, thresh_out, 100, 255, 3);
+
+    Canny(thresh_out, canny_out, 50, 100, 3);
+    findContours(thresh_out, contours, CV_RETR_LIST, 
             CV_CHAIN_APPROX_SIMPLE);
 
     return contours;
@@ -117,15 +120,29 @@ int main( int argc, char** argv ) {
 
         cout << "Contours: " << contours.size() << endl;
 
-        RNG rng(12345);
+        //RNG rng(12345);
         for (int i = 0; i < contours.size(); i++) {
+            /* Color contour outlines randomly
             Scalar color = Scalar(rng.uniform(0,255), rng.uniform(0,255),
                     rng.uniform(0,255));
             drawContours(image, contours, i, color, 2, 8);
+            */
+
+            /* Get mean color within bounding rectangle */
+            // This would be better if I could fit a rotated ellipse to it.
+            Rect _boundingRect = boundingRect(contours[i]);
+            Scalar mean_color = mean(image(_boundingRect));
+            //RotatedRect ellipseBound = fitEllipse(image(contours[i]));
+            //Scalar mean_color = mean(image(ellipseBound));
+            drawContours(image, contours, i, mean_color, FILLED);
+
+            /* Get center of bounding rectangle */
+            Moments m = moments(contours[i], false);
+            Point center = Point2f(m.m10/m.m00, m.m01/m.m00);
         }
 
         imshow( "Original Image", image );
-        //imshow( "Saliency Map", saliency );
+        imshow( "Saliency Map", saliency );
 
 		if (waitKey(30) == 27) {
 			break;
