@@ -34,7 +34,7 @@ Mat morphMap(Mat saliencyMap) {
 }
 
 Mat addScaledMap(Mat saliencyMap, Ptr<Saliency> saliencyAlgorithm, 
-		Mat image, int scale) {
+		Mat image, int scale, int max) {
 	Mat scaledImage;
 	Mat scaledMap;
 
@@ -44,8 +44,8 @@ Mat addScaledMap(Mat saliencyMap, Ptr<Saliency> saliencyAlgorithm,
 
 	if( saliencyAlgorithm->computeSaliency( scaledImage, scaledMap ) ) {
 		resize( scaledMap, scaledMap, imageSize );
-		addWeighted( saliencyMap, (((float) scale-1)/(float) scale), 
-				scaledMap, (1/(float) scale), 1, saliencyMap );
+		addWeighted( saliencyMap, (((float) scale)/(float) max), 
+				scaledMap, (((float) (max - scale))/(float) max), 1, saliencyMap );
 	}
 
 	return morphMap(saliencyMap);
@@ -65,7 +65,7 @@ Mat get_saliencyMap(Mat image) {
 
         int max = 10;
         for ( int i = 2 ; i < max ; i++ ) {
-            addScaledMap(sumSaliencyMap, saliencyAlgorithm, image, i);
+            addScaledMap(sumSaliencyMap, saliencyAlgorithm, image, i, max);
         }
     }
 
@@ -80,7 +80,7 @@ vector<vector<Point>> get_contours(
 
     threshold(src_img, thresh_out, 100, 255, 3);
 
-    Canny(thresh_out, canny_out, 50, 100, 3);
+    //Canny(thresh_out, canny_out, 50, 100, 3);
     findContours(thresh_out, contours, CV_RETR_LIST, 
             CV_CHAIN_APPROX_SIMPLE);
 
@@ -120,9 +120,10 @@ int main( int argc, char** argv ) {
 
         cout << "Contours: " << contours.size() << endl;
 
-        //RNG rng(12345);
+        RNG rng(12345);
+        Mat blackImage(image.size(), CV_8UC3, Scalar(0,0,0));
         for (int i = 0; i < contours.size(); i++) {
-            /* Color contour outlines randomly
+            /* Color contour outlines randomly 
             Scalar color = Scalar(rng.uniform(0,255), rng.uniform(0,255),
                     rng.uniform(0,255));
             drawContours(image, contours, i, color, 2, 8);
@@ -134,15 +135,19 @@ int main( int argc, char** argv ) {
             Scalar mean_color = mean(image(_boundingRect));
             //RotatedRect ellipseBound = fitEllipse(image(contours[i]));
             //Scalar mean_color = mean(image(ellipseBound));
-            drawContours(image, contours, i, mean_color, FILLED);
+
+            /* Draw colored objects on a new image */
+            drawContours(blackImage, contours, i, mean_color, FILLED);
 
             /* Get center of bounding rectangle */
             Moments m = moments(contours[i], false);
             Point center = Point2f(m.m10/m.m00, m.m01/m.m00);
+            circle(blackImage, center, 2.0, Scalar(0,0,255), -1, 8);
         }
 
         imshow( "Original Image", image );
         imshow( "Saliency Map", saliency );
+        imshow( "Contours", blackImage );
 
 		if (waitKey(30) == 27) {
 			break;
